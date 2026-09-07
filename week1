@@ -1,0 +1,74 @@
+import math
+n=int(input("Enter number of inputs: "))
+x=[]
+for i in range(n):
+    x.append(float(input("enter x"+str(i+1)+": ")))
+w=[]
+for i in range(n):
+    w.append(float(input("enter w"+str(i+1)+": ")))
+b=float(input("enter bias: "))
+# Normalization
+print("0. No Normalization")
+print("1. Min-Max (0 to 1)")
+print("2. Min-Max (-1 to 1)")
+print("3. Z-Score")
+print("4. Decimal Scaling")
+norm = int(input("enter choice: "))
+xn = x.copy()
+if norm==1:
+    xmin=float(input("enter minimum: "))
+    xmax=float(input("enter maximum: "))
+    for i in range(n):
+        xn[i]=(x[i]-xmin)/(xmax-xmin)
+elif norm==2:
+    xmin=float(input("enter minimum: "))
+    xmax=float(input("enter maximum: "))
+    for i in range(n):
+        xn[i]=2*(x[i]-xmin)/(xmax-xmin)-1
+elif norm==3:
+    mean=sum(x)/n
+    std=(sum((i-mean)**2 for i in x)/n)**0.5
+    for i in range(n):
+        xn[i]=(x[i]-mean)/std if std!=0 else 0
+elif norm==4:
+    j=int(input("enter scaling factor: "))
+    for i in range(n):
+        xn[i]=x[i]/(10**j)
+# Activation function
+print("1. Linear")
+print("2. Binary Step")
+print("3. Sigmoid")
+print("4. Tanh")
+print("5. ReLU")
+print("6. Leaky ReLU")
+print("7. ELU")
+print("8. Softplus")
+choice = int(input("enter choice: "))
+z=sum(x[i]*w[i] for i in range(n))+b
+zn=sum(xn[i]*w[i] for i in range(n))+b
+
+def activation(z,choice):
+    if choice==1:
+        return z
+    elif choice==2:
+        return 1 if z>=0 else 0
+    elif choice==3:
+        return 1/(1+math.exp(-z))
+    elif choice==4:
+        return math.tanh(z)
+    elif choice==5:
+        return max(0,z)
+    elif choice==6:
+        return z if z>0 else 0.01*z
+    elif choice==7:
+        return z if z>0 else math.exp(z)-1
+    elif choice==8:
+        return math.log(1+math.exp(z))
+a=activation(z,choice)
+an=activation(zn,choice)
+print("org inputs:",x)
+print("normalized inputs:", xn)
+print("weighted sum without normalization:",round(z,6))
+print("output without normalization:",round(a,6))
+print("weighted Sum with normalization:",round(zn,6))
+print("output with normalization:",round(an,6))
