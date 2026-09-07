@@ -1,0 +1,155 @@
+import numpy as np
+%pip install tensorflow
+from sklearn.datasets import make_moons
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    confusion_matrix
+)
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.optimizers import Adam
+x,y=make_moons(
+    n_samples=1000,
+    noise=0.20,
+    random_state=42
+)
+
+print("Dataset Information")
+print("-------------------")
+print("number of samples :", x.shape[0])
+print("number of features:", x.shape[1])
+x_train,x_test,y_train, y_test=train_test_split(
+    x,
+    y,
+    test_size=0.20,
+    random_state=42,
+    stratify=y
+)
+scaler=StandardScaler()
+x_train=scaler.fit_transform(x_train)
+x_test=scaler.transform(x_test)
+print("\n" + "="*60)
+print("LOGISTIC REGRESSION")
+print("="*60)
+
+lr_model=LogisticRegression()
+lr_model.fit(x_train, y_train)
+lr_prediction=lr_model.predict(x_test)
+
+lr_accuracy=accuracy_score(y_test, lr_prediction)
+lr_precision=precision_score(y_test, lr_prediction)
+lr_recall=recall_score(y_test, lr_prediction)
+lr_f1=f1_score(y_test, lr_prediction)
+
+print("\nLogistic Regression Results")
+
+print("accuracy  :", round(lr_accuracy*100,2),"%")
+print("precision :", round(lr_precision*100,2),"%")
+print("recall    :", round(lr_recall*100,2),"%")
+print("f1 Score  :", round(lr_f1*100,2),"%")
+print("\nConfusion Matrix")
+print(confusion_matrix(y_test,lr_prediction))
+
+print("\n" + "="*60)
+print("DEEP NEURAL NETWORK")
+print("="*60)
+
+dnn_model=Sequential([
+    Dense(32,activation="relu", input_shape=(2,)),
+    Dense(16,activation="relu"),
+    Dense(8,activation="relu"),
+    Dense(1,activation="sigmoid")
+])
+
+dnn_model.compile(
+    optimizer=Adam(learning_rate=0.001),
+    loss="binary_crossentropy",
+    metrics=["accuracy"]
+)
+
+print("\nTraining DNN...")
+
+history = dnn_model.fit(
+    x_train,
+    y_train,
+    epochs=100,
+    batch_size=32,
+    validation_split=0.20,
+    verbose=0
+)
+
+print("DNN Training Completed")
+
+prob=dnn_model.predict(x_test, verbose=0)
+dnn_prediction=(prob>=0.5).astype(int).flatten()
+
+dnn_accuracy = accuracy_score(y_test, dnn_prediction)
+dnn_precision = precision_score(y_test, dnn_prediction)
+dnn_recall = recall_score(y_test, dnn_prediction)
+dnn_f1 = f1_score(y_test, dnn_prediction)
+
+print("\nDeep Neural Network Results")
+
+print("accuracy  :", round(dnn_accuracy*100,2),"%")
+print("precision :", round(dnn_precision * 100,2),"%")
+print("recall    :", round(dnn_recall*100,2),"%")
+print("f1 Score  :", round(dnn_f1*100,2),"%")
+print("\nConfusion Matrix")
+print(confusion_matrix(y_test, dnn_prediction))
+print("\n" + "="*70)
+
+print("LOGISTIC REGRESSION vs DEEP NEURAL NETWORK")
+print("="*70)
+print(
+    "{:<20}{:<20}{:<20}".format(
+        "metric",
+        "logistic regression",
+        "deep neural network"
+    )
+)
+print("-"*70)
+
+print(
+    "{:<20}{:<20.2f}{:<20.2f}".format(
+        "accuracy (%)",
+        lr_accuracy*100,
+        dnn_accuracy*100
+    )
+)
+
+print(
+    "{:<20}{:<20.2f}{:<20.2f}".format(
+        "precision (%)",
+        lr_precision*100,
+        dnn_precision*100
+    )
+)
+print(
+    "{:<20}{:<20.2f}{:<20.2f}".format(
+        "recall (%)",
+        lr_recall*100,
+        dnn_recall*100
+    )
+)
+print(
+    "{:<20}{:<20.2f}{:<20.2f}".format(
+        "F1 Score (%)",
+        lr_f1*100,
+        dnn_f1*100
+    )
+)
+print("="*70)
+if dnn_accuracy>lr_accuracy:
+    print("\nResult: DNN performed better than LR")
+
+elif dnn_accuracy<lr_accuracy:
+    print(
+        "\nResult: LR performed better than DNN")
+else:
+    print("\nResult: Both models achieved the same accuracy")
