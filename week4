@@ -1,0 +1,98 @@
+import numpy as np
+def relu(x):
+    return np.maximum(0,x)
+def relu_derivative(x):
+    return (x>0).astype(float)
+def sigmoid(x):
+    return 1/(1+np.exp(-np.clip(x,-500,500)))
+def compute_loss(y,y_pred):
+    epsilon=1e-10
+    y_pred=np.clip(y_pred,epsilon,1-epsilon)
+    loss=-np.mean(
+        y*np.log(y_pred)+
+        (1-y)*np.log(1-y_pred)
+    )
+    return loss
+m=int(input("enter number of training samples:"))
+n=int(input("enter number of input features:"))
+X=[]
+Y=[]
+print("enter training samples\n")
+for i in range(m):
+    row=[]
+    print(f"sample {i+1}")
+    for j in range(n):
+        row.append(float(input(f"X{j+1}:")))
+    target=int(input("target(0/1):"))
+    X.append(row)
+    Y.append(target)
+X = np.array(X)
+Y = np.array(Y).reshape(m,1)
+hidden1=int(input("neurons in hidden layer 1: "))
+hidden2=int(input("neurons in hidden layer 2:"))
+lr=float(input("learning rate:"))
+tolerance=1e-7
+max_iter=10000
+np.random.seed(0)
+W1=np.random.randn(n,hidden1)*0.1
+B1=np.zeros((1,hidden1))
+W2=np.random.randn(hidden1,hidden2)*0.1
+B2=np.zeros((1,hidden2))
+W3=np.random.randn(hidden2,1)*0.1
+B3=np.zeros((1,1))
+prev_loss=float("inf")
+iteration=0
+print("training started\n")
+print("{:<10}{:<15}".format("Iteration","Loss"))
+print("-"*30)
+while True:
+    iteration += 1
+    Z1=np.dot(X,W1)+B1
+    A1=relu(Z1)
+    Z2=np.dot(A1,W2)+B2
+    A2=relu(Z2)
+    Z3=np.dot(A2,W3)+B3
+    Y_pred=sigmoid(Z3)
+    loss=compute_loss(Y,Y_pred)
+    print("{:<10}{:<15.8f}".format(iteration,loss))
+    if abs(prev_loss-loss)<tolerance:
+        break
+    prev_loss=loss
+    dZ3=Y_pred-Y
+    dW3=np.dot(A2.T,dZ3)/m
+    dB3=np.sum(dZ3,axis=0,keepdims=True)/m
+    dA2=np.dot(dZ3,W3.T)
+    dZ2=dA2*relu_derivative(Z2)
+    dW2=np.dot(A1.T,dZ2)/m
+    dB2=np.sum(dZ2,axis=0,keepdims=True)/m
+    dA1=np.dot(dZ2,W2.T)
+    dZ1=dA1*relu_derivative(Z1)
+    dW1=np.dot(X.T,dZ1)/m
+    dB1=np.sum(dZ1,axis=0,keepdims=True)/m
+    W3-=lr*dW3
+    B3-=lr*dB3
+    W2-=lr*dW2
+    B2-=lr*dB2
+    W1-=lr*dW1
+    B1-=lr*dB1
+    if iteration>=max_iter:
+        print("maximum iterations reached")
+        break
+print("training completed")
+print("final loss=",loss)
+print("prediction results")
+print("-"*55)
+print("{:<10}{:<12}{:<15}{:<10}".format(
+    "Sample",
+    "Actual",
+    "Probability",
+    "Predicted"))
+print("-"*55)
+predicted=(Y_pred>=0.5).astype(int)
+for i in range(m):
+    print("{:<10}{:<12}{:<15.6f}{:<10}".format(
+        i+1,
+        int(Y[i][0]),
+        Y_pred[i][0],
+        int(predicted[i][0])))
+print("-"*55)
